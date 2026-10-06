@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Shopping Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b1020;
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* Main background */
+
+        body::before {
+            content: "";
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: #5b21b6;
+            filter: blur(180px);
+            opacity: 0.25;
+            top: -150px;
+            left: -150px;
+            z-index: -1;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            width: 450px;
+            height: 450px;
+            background: #2563eb;
+            filter: blur(180px);
+            opacity: 0.20;
+            bottom: -150px;
+            right: -100px;
+            z-index: -1;
+        }
+
+        /* Main container */
+
+        .container {
+            width: 900px;
+            max-width: 95%;
+            height: 90vh;
+            margin: 5vh auto;
+            background: rgba(17, 24, 39, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+        }
+
+        /* Header */
+
+        .header {
+            padding: 22px 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .brand p {
+            margin: 4px 0 0;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #a7f3d0;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        /* Chat area */
+
+        #chatbox {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #chatbox::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        #chatbox::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        /* Welcome */
+
+        .welcome {
+            text-align: center;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .welcome-icon {
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        .welcome h2 {
+            margin: 5px 0;
+            font-size: 25px;
+        }
+
+        .welcome p {
+            color: #94a3b8;
+            margin: 8px 0;
+        }
+
+        /* Messages */
+
+        .message {
+            display: flex;
+            margin: 18px 0;
+            animation: appear 0.25s ease;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .bot-message {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 14px 17px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .user-bubble {
+            background: linear-gradient(135deg, #6366f1, #7c3aed);
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.18);
+        }
+
+        .bot-bubble {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom-left-radius: 5px;
+            color: #e2e8f0;
+        }
+
+        .message-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        /* Quick buttons */
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            background: #172033;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            padding: 9px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        .quick-btn:hover {
+            background: #263452;
+            border-color: #6366f1;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Input section */
+
+        .input-section {
+            padding: 18px 22px 22px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.75);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            background: #111827;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 7px;
+            transition: 0.2s;
+        }
+
+        .input-area:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        button.send-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 0 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #6366f1, #7c3aed);
+            transition: 0.2s;
+        }
+
+        button.send-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .footer-text {
+            text-align: center;
+            color: #475569;
+            font-size: 11px;
+            margin-top: 9px;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 600px) {
+
+            .container {
+                height: 100vh;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .status {
+                display: none;
+            }
+
+            #chatbox {
+                padding: 15px;
+            }
+
+            .bubble {
+                max-width: 88%;
+            }
+
+            .welcome h2 {
+                font-size: 21px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <div class="brand">
+
+            <div class="logo">
+                🛒
+            </div>
+
+            <div>
+                <h1>AI Shopping Assistant</h1>
+                <p>Your intelligent shopping companion</p>
+            </div>
+
+        </div>
+
+        <div class="status">
+            <span class="status-dot"></span>
+            AI Online
+        </div>
+
+    </div>
+
+
+    <!-- CHAT -->
+
+    <div id="chatbox">
+
+        <div class="welcome">
+
+            <div class="welcome-icon">
+                ✨
+            </div>
+
+            <h2>What can I help you find?</h2>
+
+            <p>
+                Ask me about products, budgets, comparisons and shopping ideas.
+            </p>
+
+        </div>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <div class="quick-actions">
+
+            <button class="quick-btn"
+                onclick="quickMessage('Find the best headphones under ₹2000')">
+                🎧 Find Products
+            </button>
+
+            <button class="quick-btn"
+                onclick="quickMessage('Help me choose a product within my budget')">
+                💰 Budget Help
+            </button>
+
+            <button class="quick-btn"
+                onclick="quickMessage('Compare two products for me')">
+                ⚖️ Compare
+            </button>
+
+            <button class="quick-btn"
+                onclick="quickMessage('Give me some good gift ideas')">
+                🎁 Gift Ideas
+            </button>
+
+        </div>
+
+
+        <!-- INITIAL AI MESSAGE -->
+
+        <div class="message bot-message">
+
+            <div class="bubble bot-bubble">
+
+                <div class="message-label">
+                    🤖 AI Assistant
+                </div>
+
+                <div class="ai-response">
+                    Hello! 👋 What are you looking for today?
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INPUT -->
+
+    <div class="input-section">
+
+        <div class="input-area">
+
+            <input
+                type="text"
+                id="message"
+                placeholder="Ask me anything about shopping..."
+                autocomplete="off"
+            >
+
+            <button class="send-btn" onclick="sendMessage()">
+                Send ➤
+            </button>
+
+        </div>
+
+        <div class="footer-text">
+            AI Shopping Assistant • Powered by local AI
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function formatResponse(text) {
+
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/^\* (.*)$/gm, "• $1")
+        .replace(/\n/g, "<br>");
+
+}
+
+
+function quickMessage(text) {
+
+    document.getElementById("message").value = text;
+
+    sendMessage();
+
+}
+
+
+async function sendMessage() {
+
+    const input = document.getElementById("message");
+    const chatbox = document.getElementById("chatbox");
+
+    const message = input.value.trim();
+
+    if (message === "") {
+        return;
+    }
+
+
+    // USER MESSAGE
+
+    chatbox.innerHTML += `
+        <div class="message user-message">
+
+            <div class="bubble user-bubble">
+
+                <div class="message-label">
+                    You
+                </div>
+
+                ${message}
+
+            </div>
+
+        </div>
+    `;
+
+
+    input.value = "";
+
+
+    // Scroll down
+
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+
+    try {
+
+        const response = await fetch("/chat", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                message: message
+            })
+
+        });
+
+
+        const data = await response.json();
+
+
+        // AI MESSAGE
+
+        chatbox.innerHTML += `
+            <div class="message bot-message">
+
+                <div class="bubble bot-bubble">
+
+                    <div class="message-label">
+                        🤖 AI Assistant
+                    </div>
+
+                    <div class="ai-response">
+                        ${formatResponse(data.response)}
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+
+        // Scroll to latest message
+
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+
+    } catch (error) {
+
+        chatbox.innerHTML += `
+            <div class="message bot-message">
+
+                <div class="bubble bot-bubble">
+
+                    <div class="message-label">
+                        🤖 AI Assistant
+                    </div>
+
+                    <div class="ai-response">
+                        Something went wrong. Please try again.
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* Press Enter to send */
+
+document.getElementById("message").addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+
+});
+
+</script>
+
+</body>
+
+</html>
